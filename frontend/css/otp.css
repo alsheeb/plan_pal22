@@ -1,0 +1,94 @@
+/* Make the background light and center the small OTP card */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+/* Wrapper to center the card in the middle of the screen */
+.otp-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The small OTP card */
+.otp-card {
+  width: 320px; /* small width */
+  background: #ffffff;
+  padding: 20px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Title */
+.otp-card h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 20px;
+  text-align: center;
+}
+
+/* Small description text */
+.otp-card .description {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #555;
+  text-align: center;
+}
+
+/* Form group style */
+.form-group {
+  margin-bottom: 10px;
+}
+
+/* Label */
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #333;
+}
+
+/* Input styles */
+.form-group input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+/* Button styles */
+button {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  background-color: #007bff;
+  color: #ffffff;
+  transition: background-color 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  background-color: #0066d4;
+}
+
+/* Disabled button style */
+button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+/* Message at the bottom (error/success) */
+.message {
+  margin-top: 12px;
+  font-size: 13px;
+  text-align: center;
+}

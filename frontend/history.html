@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My History - Plant_Pal</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        /* History Page Specific Styles */
+        .history-section {
+            min-height: calc(100vh - var(--nav-height) - 100px);
+            padding: 3rem 0;
+        }
+
+        .history-hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .history-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #f9fafb;
+        }
+
+        .history-hero p {
+            color: var(--color-text-muted);
+            font-size: 1rem;
+        }
+
+        /* Stats Bar */
+        .history-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .history-stat {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 16px;
+            padding: 1.2rem 2rem;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .history-stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #22c55e;
+            display: block;
+        }
+
+        .history-stat-label {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Filter & Search Bar */
+        .history-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(15, 23, 42, 0.8);
+            color: #e5e7eb;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+
+        .search-box input::placeholder {
+            color: #6b7280;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1.1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(15, 23, 42, 0.6);
+            color: #e5e7eb;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: rgba(148, 163, 184, 0.6);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        /* History Grid */
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* History Card */
+        .history-card {
+            background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.05), #020617);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .history-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(34, 197, 94, 0.5);
+        }
+
+        .history-card-image {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .history-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .history-card:hover .history-card-image img {
+            transform: scale(1.05);
+        }
+
+        .history-card-image::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(to top, rgba(2, 6, 23, 0.9), transparent);
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.4rem 1rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            z-index: 2;
+        }
+
+        .status-badge.healthy {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .status-badge.disease {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .history-card-content {
+            padding: 1.5rem;
+        }
+
+        .history-card-content h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #f9fafb;
+            margin-bottom: 0.25rem;
+        }
+
+        .history-card-content .scientific {
+            font-size: 0.85rem;
+            color: #22c55e;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+
+        /* Confidence Bar */
+        .confidence-wrapper {
+            margin-bottom: 1rem;
+        }
+
+        .confidence-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .confidence-label {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        .confidence-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #22c55e;
+        }
+
+        .confidence-bar {
+            height: 8px;
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #4ade80);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        .confidence-fill.low {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+
+        .confidence-fill.medium {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        /* Card Footer */
+        .history-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .history-date {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        .history-date i {
+            color: #22c55e;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .card-action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: rgba(15, 23, 42, 0.6);
+            color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .card-action-btn:hover {
+            background: #22c55e;
+            border-color: #22c55e;
+            color: #fff;
+        }
+
+        .card-action-btn.delete:hover {
+            background: #ef4444;
+            border-color: #ef4444;
+        }
+
+        /* Loading State */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(34, 197, 94, 0.2);
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-state p {
+            margin-top: 1rem;
+            color: var(--color-text-muted);
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.6;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            color: #f9fafb;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            color: var(--color-text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 3rem;
+            color: #ef4444;
+        }
+
+        .error-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .history-hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .history-stats {
+                gap: 1rem;
+            }
+
+            .history-stat {
+                padding: 1rem 1.5rem;
+                min-width: 120px;
+            }
+
+            .history-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+
+            .filter-buttons {
+                justify-content: center;
+            }
+
+            .history-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🌿</span>
+                <span class="logo-text">Plant_Pal</span>
+            </a>
+            
+            <div class="nav-links" id="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="history.html" class="nav-link active">History</a>
+                 </a>
+            </div>
+            
+            <div id="auth-nav"></div>
+            
+            <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- History Section -->
+    <section class="history-section">
+        <div class="container">
+            <!-- Hero -->
+            <div class="history-hero">
+                <h1>📊 Analysis <span class="gradient-text">History</span></h1>
+                <p>Track all your plant disease analyses in one place</p>
+            </div>
+            
+            <!-- Stats -->
+            <div class="history-stats" id="historyStats">
+                <div class="history-stat">
+                    <span class="history-stat-number" id="totalScans">0</span>
+                    <span class="history-stat-label">Total Scans</span>
+                </div>
+                <div class="history-stat">
+                    <span class="history-stat-number" id="healthyCount">0</span>
+                    <span class="history-stat-label">Healthy Plants</span>
+                </div>
+                <div class="history-stat">
+                    <span class="history-stat-number" id="diseaseCount">0</span>
+                    <span class="history-stat-label">Diseases Found</span>
+                </div>
+            </div>
+            
+            <!-- Toolbar -->
+            <div class="history-toolbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search by disease name...">
+                </div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="healthy">Healthy</button>
+                    <button class="filter-btn" data-filter="disease">Diseased</button>
+                </div>
+            </div>
+            
+            <div class="history-content">
+                <!-- Loading State -->
+                <div class="loading-state" id="loadingState">
+                    <div class="loader"></div>
+                    <p>Loading your history...</p>
+                </div>
+                
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-icon">🔍</div>
+                    <h3>No History Yet</h3>
+                    <p>Start analyzing plant images to build your history</p>
+                    <a href="index.html" class="btn btn-primary">
+                        <i class="fas fa-leaf"></i>
+                        Analyze a Plant
+                    </a>
+                </div>
+                
+                <!-- History Grid -->
+                <div class="history-grid" id="historyGrid" style="display: none;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <a href="#" class="footer-brand">
+                    <span class="logo-icon">🌿</span>
+                    <span class="logo-text">Plant_Pal</span>
+                </a>
+                <p class="footer-text">Empowering agriculture with AI-driven disease detection.</p>
+                <p class="footer-copyright">© 2025 Plant_Pal. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        let allHistoryData = [];
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if user is logged in
+            if (!Auth.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Update nav
+            Auth.updateNav();
+            
+            // Load history
+            await loadHistory();
+            
+            // Setup filters
+            setupFilters();
+            
+            // Setup search
+            setupSearch();
+        });
+        
+        async function loadHistory() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const historyGrid = document.getElementById('historyGrid');
+            
+            try {
+                const response = await API.getHistory();
+                loadingState.style.display = 'none';
+                
+                if (response.success && response.history && response.history.length > 0) {
+                    allHistoryData = response.history;
+                    historyGrid.style.display = 'grid';
+                    
+                    // Update stats
+                    updateStats(response.history);
+                    
+                    // Render cards
+                    renderHistoryCards(response.history);
+                } else {
+                    emptyState.style.display = 'flex';
+                    document.getElementById('historyStats').style.display = 'none';
+                    document.querySelector('.history-toolbar').style.display = 'none';
+                }
+            } catch (error) {
+                loadingState.innerHTML = `
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Failed to load history</h3>
+                        <p>Please try again later</p>
+                        <button class="btn btn-primary" onclick="location.reload()">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateStats(history) {
+            const total = history.length;
+            const healthy = history.filter(item => 
+                item.predicted_class.toLowerCase().includes('healthy')
+            ).length;
+            const diseased = total - healthy;
+            
+            document.getElementById('totalScans').textContent = total;
+            document.getElementById('healthyCount').textContent = healthy;
+            document.getElementById('diseaseCount').textContent = diseased;
+        }
+        
+        function renderHistoryCards(data) {
+            const historyGrid = document.getElementById('historyGrid');
+            historyGrid.innerHTML = '';
+            
+            if (data.length === 0) {
+                historyGrid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="empty-icon">🔍</div>
+                        <h3>No Results Found</h3>
+                        <p>Try adjusting your search or filters</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            data.forEach(item => {
+                const card = createHistoryCard(item);
+                historyGrid.appendChild(card);
+            });
+        }
+        
+        function createHistoryCard(item) {
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            
+            const date = new Date(item.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const isHealthy = item.predicted_class.toLowerCase().includes('healthy');
+            const statusClass = isHealthy ? 'healthy' : 'disease';
+            
+            // Determine confidence level for color
+            let confidenceClass = '';
+            if (item.confidence < 50) confidenceClass = 'low';
+            else if (item.confidence < 80) confidenceClass = 'medium';
+            
+            card.innerHTML = `
+                <div class="history-card-image">
+                    <img src="/uploads/${item.image_path}" alt="Plant Image" 
+                         onerror="this.src='https://via.placeholder.com/400x200/0f172a/22c55e?text=🌿+Plant'">
+                    <span class="status-badge ${statusClass}">
+                        ${isHealthy ? '✓ Healthy' : '⚠ Disease'}
+                    </span>
+                </div>
+                <div class="history-card-content">
+                    <h3>${item.predicted_class}</h3>
+                    <p class="scientific">${item.scientific_name || 'Species unknown'}</p>
+                    
+                    <div class="confidence-wrapper">
+                        <div class="confidence-header">
+                            <span class="confidence-label">Confidence Level</span>
+                            <span class="confidence-value">${item.confidence}%</span>
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill ${confidenceClass}" style="width: ${item.confidence}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="history-card-footer">
+                        <div class="history-date">
+                            <i class="far fa-calendar-alt"></i>
+                            <span>${date}</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-action-btn" title="View Details" onclick="viewDetails('${item.id}')">
+                                <i class="fas fa-eye"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function setupFilters() {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Update active state
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Filter data
+                    const filter = btn.dataset.filter;
+                    let filteredData = allHistoryData;
+                    
+                    if (filter === 'healthy') {
+                        filteredData = allHistoryData.filter(item => 
+                            item.predicted_class.toLowerCase().includes('healthy')
+                        );
+                    } else if (filter === 'disease') {
+                        filteredData = allHistoryData.filter(item => 
+                            !item.predicted_class.toLowerCase().includes('healthy')
+                        );
+                    }
+                    
+                    // Apply search filter too
+                    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+                    if (searchTerm) {
+                        filteredData = filteredData.filter(item =>
+                            item.predicted_class.toLowerCase().includes(searchTerm)
+                        );
+                    }
+                    
+                    renderHistoryCards(filteredData);
+                });
+            });
+        }
+        
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            let debounceTimer;
+            
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    
+                    // Get current filter
+                    const activeFilter = document.querySelector('.filter-btn.active').dataset.filter;
+                    let filteredData = allHistoryData;
+                    
+                    if (activeFilter === 'healthy') {
+                        filteredData = allHistoryData.filter(item => 
+                            item.predicted_class.toLowerCase().includes('healthy')
+                        );
+                    } else if (activeFilter === 'disease') {
+                        filteredData = allHistoryData.filter(item => 
+                            !item.predicted_class.toLowerCase().includes('healthy')
+                        );
+                    }
+                    
+                    // Apply search
+                    if (searchTerm) {
+                        filteredData = filteredData.filter(item =>
+                            item.predicted_class.toLowerCase().includes(searchTerm) ||
+                            (item.scientific_name && item.scientific_name.toLowerCase().includes(searchTerm))
+                        );
+                    }
+                    
+                    renderHistoryCards(filteredData);
+                }, 300);
+            });
+        }
+        
+        function viewDetails(id) {
+            // Navigate to details page or show modal
+            window.location.href = `details.html?id=${id}`;
+        }
+        
+        function deleteItem(id) {
+            if (confirm('Are you sure you want to delete this record?')) {
+                // Call API to delete
+                // API.deleteHistory(id).then(() => loadHistory());
+                console.log('Delete item:', id);
+            }
+        }
+        
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu-btn').classList.toggle('active');
+            document.getElementById('nav-links').classList.toggle('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant_Pal - Plant Disease Detection</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Plant_Pal helps you detect plant diseases using AI. Upload a leaf image and get instant diagnosis, symptoms, and treatment recommendations.">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link 
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" 
+        rel="stylesheet"
+    >
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" aria-label="Main navigation">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon" aria-hidden="true">🌿</span>
+                <span class="logo-text">Plant_Pal</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="#features" class="nav-link">Features</a>
+                <a href="reminders.html" class="nav-link">reminders</a>
+                <div id="auth-nav">
+                    <!-- Dynamic: Login/Register or User Menu -->
+                </div>
+            </div>
+            <button 
+                class="mobile-menu-btn" 
+                id="mobileMenuBtn" 
+                type="button"
+                aria-label="Toggle navigation menu"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Identify Plant Diseases
+                    <span class="gradient-text">Instantly</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Upload a photo of your plant leaf and our AI will analyze it to detect diseases, 
+                    provide care instructions, and recommend treatments.
+                </p>
+                <div class="hero-stats" aria-label="Plant_Pal statistics">
+                    <div class="stat">
+                        <span class="stat-number">97%</span>
+                        <span class="stat-label">Accuracy</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">39+</span>
+                        <span class="stat-label">Diseases</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">14+</span>
+                        <span class="stat-label">Plant Types</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Upload Section -->
+        <section class="upload-section" id="upload" aria-labelledby="uploadTitle">
+            <div class="container">
+                <div class="upload-card">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon" aria-hidden="true">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <h2 class="upload-title" id="uploadTitle">Upload Plant Image</h2>
+                        <p class="upload-text">Drag and drop your image here, or click to browse</p>
+                        <p class="upload-hint">Supports: All image types (Max 16MB)</p>
+                        <input type="file" id="imageInput" accept="image/*" hidden>
+                        <button class="btn btn-primary" id="selectBtn" type="button">Select Image</button>
+                    </div>
+                    
+                    <!-- Image Preview -->
+                    <div class="preview-area" id="previewArea" style="display: none;">
+                        <div class="preview-image-container">
+                            <img id="previewImage" src="" alt="Plant image preview">
+                            <button 
+                                class="remove-btn" 
+                                id="removeBtn" 
+                                type="button"
+                                aria-label="Remove selected image"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div class="preview-actions">
+                            <button class="btn btn-secondary" id="changeBtn" type="button">Change Image</button>
+                            <button class="btn btn-primary" id="analyzeBtn" type="button">
+                                <span class="btn-text">Analyze Plant</span>
+                                <span class="btn-loader" style="display: none;" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section 
+            class="results-section" 
+            id="results" 
+            style="display: none;"
+            aria-labelledby="resultsTitle"
+        >
+            <div class="container">
+                <div class="results-card">
+                    <div class="results-header">
+                        <h2 id="resultsTitle">Analysis Results</h2>
+                        <div 
+                            class="confidence-badge" 
+                            id="confidenceBadge" 
+                            aria-label="Prediction confidence"
+                        >
+                            <span class="confidence-value">0%</span>
+                            <span class="confidence-label">Confidence</span>
+                        </div>
+                    </div>
+                    
+                    <div class="results-grid">
+                        <!-- Disease Info -->
+                        <div class="result-item disease-info">
+                            <div class="result-icon" aria-hidden="true">🔬</div>
+                            <div class="result-content">
+                                <h3>Identified Condition</h3>
+                                <p class="disease-name" id="diseaseName">--</p>
+                                <p class="scientific-name" id="scientificName">--</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Second Guess -->
+                        <div class="result-item second-guess">
+                            <div class="result-icon" aria-hidden="true">🎯</div>
+                            <div class="result-content">
+                                <h3>Alternative Possibility</h3>
+                                <p class="disease-name" id="secondGuess">--</p>
+                                <p class="confidence-text" id="secondConfidence">--</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="info-section">
+                        <h3>📋 Description</h3>
+                        <p id="description">--</p>
+                    </div>
+                    
+                    <!-- Symptoms -->
+                    <div class="info-section">
+                        <h3>🩺 Symptoms</h3>
+                        <p id="symptoms">--</p>
+                    </div>
+                    
+                    <!-- Treatment -->
+                    <div class="info-section treatment">
+                        <h3>💊 Recommended Treatment</h3>
+                        <p id="treatment">--</p>
+                    </div>
+                    
+                    <!-- Guest Notice -->
+                    <div class="guest-notice" id="guestNotice" style="display: none;">
+                        <p>🔒 <strong>Sign in</strong> to save this result to your history</p>
+                        <a href="login.html" class="btn btn-outline">Login</a>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="results-actions">
+                        <button class="btn btn-secondary" id="newAnalysisBtn" type="button">
+                            New Analysis
+                        </button>
+                        <button 
+                            class="btn btn-primary" 
+                            id="saveResultBtn" 
+                            type="button"
+                            style="display: none;"
+                        >
+                            Save to History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section" id="features" aria-labelledby="featuresTitle">
+            <div class="container">
+                <h2 class="section-title" id="featuresTitle">How It Works</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon" aria-hidden="true">📸</div>
+                        <h3>Upload Photo</h3>
+                        <p>Take a clear photo of the affected plant leaf and upload it to our system</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon" aria-hidden="true">🤖</div>
+                        <h3>AI Analysis</h3>
+                        <p>Our advanced AI model analyzes the image with 97% accuracy</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon" aria-hidden="true">📊</div>
+                        <h3>Get Results</h3>
+                        <p>Receive detailed diagnosis with symptoms and treatment recommendations</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon" aria-hidden="true">🌱</div>
+                        <h3>Save Your Plants</h3>
+                        <p>Follow the treatment plan to restore your plant's health</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo-icon" aria-hidden="true">🌿</span>
+                    <span class="logo-text">Plant_Pal</span>
+                </div>
+                <p class="footer-text">
+                    Helping gardeners and farmers protect their plants with AI-powered disease detection.
+                </p>
+                <p class="footer-text">
+                    Accurate diagnosis, detailed symptoms, and practical treatment plans for healthier plants.
+                </p>
+                <p class="footer-copy">&copy; 2025 Plant_Pal. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+  <!-- Scripts -->
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/upload.js"></script>
+<script src="js/main.js"></script>
+<script src="js/reminders.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="js/gemini-chat.js"></script>
+<script src="js/chat-ui.js"></script>
+</body>
+</html>

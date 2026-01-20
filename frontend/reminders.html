@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watering Reminders - Plant_Pal</title>
+
+    <!-- Global styles (if you already use it in other pages) -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Reminders page specific styles -->
+    <link rel="stylesheet" href="css/reminders.css">
+
+    <!-- Fonts + Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🌿</span>
+                <span>Plant_Pal</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="reminders.html" class="nav-link active">Reminders</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-icon">💧</div>
+            <h1 class="hero-title">Watering Reminders</h1>
+            <p class="hero-subtitle">
+                Never forget to water your plants! Create custom watering schedules for each plant.
+            </p>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card">
+                <div class="stat-icon water">💧</div>
+                <span class="stat-value" id="totalReminders">0</span>
+                <span class="stat-label">Total reminders</span>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon plant">🌱</div>
+                <span class="stat-value" id="totalPlants">0</span>
+                <span class="stat-label">Registered plants</span>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon time">⏰</div>
+                <span class="stat-value" id="todayReminders">0</span>
+                <span class="stat-label">Today’s reminders</span>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon done">✅</div>
+                <span class="stat-value" id="completedToday">0</span>
+                <span class="stat-label">Watered today</span>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <div class="search-wrapper">
+                <i class="fas fa-search search-icon"></i>
+                <input
+                    type="text"
+                    class="search-input"
+                    id="searchInput"
+                    placeholder="Search for a plant..."
+                >
+            </div>
+            <button class="add-btn" onclick="openModal()">
+                <i class="fas fa-plus"></i>
+                Add new reminder
+            </button>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All</button>
+            <button class="filter-tab" data-filter="today">Today</button>
+            <button class="filter-tab" data-filter="vegetables">Vegetables</button>
+            <button class="filter-tab" data-filter="flowers">Flowers</button>
+            <button class="filter-tab" data-filter="succulents">Succulents</button>
+        </div>
+
+        <!-- Reminders Grid -->
+        <div class="reminders-grid" id="remindersGrid">
+            <!-- Cards will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="reminderModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> <span id="modalTitle">Add new reminder</span></h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="reminderForm">
+                    <div class="form-group">
+                        <label class="form-label">Plant name *</label>
+                        <input
+                            type="text"
+                            class="form-input"
+                            id="plantName"
+                            placeholder="e.g. Tomato, Rose, Cactus..."
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Plant type</label>
+                        <select class="form-select" id="plantType">
+                            <option value="">Select type</option>
+                            <option value="vegetables">🥬 Vegetables</option>
+                            <option value="fruits">🍎 Fruits</option>
+                            <option value="flowers">🌸 Flowers</option>
+                            <option value="succulents">🌵 Succulents</option>
+                            <option value="herbs">🌿 Herbs</option>
+                            <option value="trees">🌳 Trees</option>
+                            <option value="indoor">🪴 Indoor</option>
+                            <option value="other">🌱 Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Watering days per week *</label>
+                        <div class="days-selector">
+                            <input type="checkbox" id="daySat" class="day-checkbox" value="Saturday">
+                            <label for="daySat" class="day-label">Sat</label>
+
+                            <input type="checkbox" id="daySun" class="day-checkbox" value="Sunday" checked>
+                            <label for="daySun" class="day-label">Sun</label>
+
+                            <input type="checkbox" id="dayMon" class="day-checkbox" value="Monday">
+                            <label for="dayMon" class="day-label">Mon</label>
+
+                            <input type="checkbox" id="dayTue" class="day-checkbox" value="Tuesday" checked>
+                            <label for="dayTue" class="day-label">Tue</label>
+
+                            <input type="checkbox" id="dayWed" class="day-checkbox" value="Wednesday">
+                            <label for="dayWed" class="day-label">Wed</label>
+
+                            <input type="checkbox" id="dayThu" class="day-checkbox" value="Thursday" checked>
+                            <label for="dayThu" class="day-label">Thu</label>
+
+                            <input type="checkbox" id="dayFri" class="day-checkbox" value="Friday">
+                            <label for="dayFri" class="day-label">Fri</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Waterings per day</label>
+                        <div class="number-stepper">
+                            <div class="stepper-control">
+                                <button type="button" class="stepper-btn" onclick="adjustValue('timesPerDay', -1)">−</button>
+                                <input
+                                    type="number"
+                                    class="stepper-value"
+                                    id="timesPerDay"
+                                    value="2"
+                                    min="1"
+                                    max="10"
+                                    readonly
+                                >
+                                <button type="button" class="stepper-btn" onclick="adjustValue('timesPerDay', 1)">+</button>
+                            </div>
+                            <span class="stepper-unit">times / day</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Watering times</label>
+                        <div class="time-inputs-container" id="timeInputs">
+                            <div class="time-input-wrapper">
+                                <i class="far fa-clock"></i>
+                                <input type="time" value="08:00">
+                            </div>
+                            <div class="time-input-wrapper">
+                                <i class="far fa-clock"></i>
+                                <input type="time" value="18:00">
+                                <button type="button" class="remove-time" onclick="removeTime(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <button type="button" class="add-time-btn" onclick="addTime()">
+                                <i class="fas fa-plus"></i> Add time
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Water amount (ml)</label>
+                        <div class="number-stepper">
+                            <div class="stepper-control">
+                                <button type="button" class="stepper-btn" onclick="adjustValue('waterAmount', -50)">−</button>
+                                <input
+                                    type="number"
+                                    class="stepper-value"
+                                    id="waterAmount"
+                                    value="500"
+                                    min="50"
+                                    max="5000"
+                                    step="50"
+                                    readonly
+                                >
+                                <button type="button" class="stepper-btn" onclick="adjustValue('waterAmount', 50)">+</button>
+                            </div>
+                            <span class="stepper-unit">ml</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-save" onclick="saveReminder()">
+                    <i class="fas fa-check"></i> Save reminder
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-text">© 2025 Plant_Pal - All rights reserved 🌿</p>
+    </footer>
+
+    <!-- Page script -->
+    <script src="js/reminders.js" defer></script>
+
+</body>
+</html>
