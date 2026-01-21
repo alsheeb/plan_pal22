@@ -1,8 +1,9 @@
 Flask
 Flask-Cors
 Flask-JWT-Extended
+mysql-connector-python
+bcrypt
 gunicorn
+tensorflow
 numpy
-pillow
-python-dotenv
-google-generativeai
+Pillow
