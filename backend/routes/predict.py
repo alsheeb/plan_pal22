@@ -12,6 +12,10 @@ from utils.model_loader import plant_model
 from utils.db import db
 
 predict_bp = Blueprint("predict", __name__)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_PATH = os.path.join(BASE_DIR, 'models', 'model.weights.h5') # تأكد من اسم الملف
+
+print(f"🔍 Loading model from: {MODEL_PATH}")
 
 # قائمة أنواع النباتات في الداتا سِت (كما في short_name)
 PLANT_PREFIXES = [

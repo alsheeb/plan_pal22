@@ -1,273 +1,143 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import (
-    create_access_token,
-    jwt_required,
-    get_jwt_identity,
-)
+import sqlite3
+import os
 import bcrypt
-from utils.db import db
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token
 
-auth_bp = Blueprint("auth", __name__)
+auth_bp = Blueprint('auth', __name__)
+import mysql.connector
+from backend.config import Config  # استدعاء ملف الكونفيج المعدل
 
-
-@auth_bp.route("/register", methods=["POST"])
-def register():
-    """Register a new user"""
+def get_db_connection():
     try:
-        data = request.get_json()
+        connection = mysql.connector.connect(
+            host=Config.MYSQL_HOST,      # يأخذ القيمة من Config
+            user=Config.MYSQL_USER,
+            password=Config.MYSQL_PASSWORD,
+            database=Config.MYSQL_DB,
+            port=Config.MYSQL_PORT
+        )
+        return connection
+    except mysql.connector.Error as err:
+        print(f"❌ Error connecting to DB: {err}")
+        return None
 
-        # Validate required fields
-        required_fields = ["full_name", "email", "password"]
-        for field in required_fields:
-            if not data.get(field):
-                return (
-                    jsonify(
-                        {
-                            "success": False,
-                            "message": f"{field} is required",
-                        }
-                    ),
-                    400,
+
+print(f"📂 Auth Database Path: {DB_FILE}")
+
+# --- دالة مساعدة للاتصال بقاعدة البيانات ---
+def get_db_connection():
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row # لتمكين الوصول للأعمدة بالاسم
+        return conn
+    except Exception as e:
+        print(f"❌ Database Connection Error: {e}")
+        return None
+
+# --- إنشاء الجدول تلقائياً عند تشغيل السيرفر ---
+def init_db():
+    try:
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    full_name TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password TEXT NOT NULL
                 )
+            ''')
+            conn.commit()
+            conn.close()
+            print("✅ Users table initialized successfully.")
+    except Exception as e:
+        print(f"❌ Database Init Error: {e}")
 
-        full_name = data["full_name"].strip()
-        email = data["email"].strip().lower()
-        password = data["password"]
+init_db()
 
-        # Validate email format
-        if "@" not in email or "." not in email:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "Invalid email format",
-                    }
-                ),
-                400,
-            )
+# --- مسار التسجيل (Register) ---
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    full_name = data.get('full_name')
+    email = data.get('email')
+    password = data.get('password')
 
-        # Validate password length
-        if len(password) < 6:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "Password must be at least 6 characters",
-                    }
-                ),
-                400,
-            )
+    if not all([full_name, email, password]):
+        return jsonify({"success": False, "message": "Missing fields"}), 400
 
-        # Check if user already exists
-        existing_user = db.get_user_by_email(email)
-        if existing_user:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "Email already registered",
-                    }
-                ),
-                409,
-            )
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"success": False, "message": "Database error"}), 500
 
-        # Hash password
-        password_hash = bcrypt.hashpw(
-            password.encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8")
+    try:
+        cursor = conn.cursor()
+        
+        # التحقق من وجود الإيميل
+        cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+        if cursor.fetchone():
+            conn.close()
+            return jsonify({"success": False, "message": "Email already exists"}), 409
 
-        # Create user
-        user_id = db.create_user(full_name, email, password_hash)
+        # تشفير كلمة المرور
+        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-        if user_id:
-            # Create access token (identity must be string)
-            access_token = create_access_token(identity=str(user_id))
+        # إضافة المستخدم
+        cursor.execute("INSERT INTO users (full_name, email, password) VALUES (?, ?, ?)",
+                       (full_name, email, hashed_pw))
+        conn.commit()
+        user_id = cursor.lastrowid
+        conn.close()
 
-            return (
-                jsonify(
-                    {
-                        "success": True,
-                        "message": "Registration successful",
-                        "user": {
-                            "id": user_id,
-                            "full_name": full_name,
-                            "email": email,
-                        },
-                        "access_token": access_token,
-                    }
-                ),
-                201,
-            )
-        else:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "Failed to create user",
-                    }
-                ),
-                500,
-            )
+        # إنشاء توكن
+        access_token = create_access_token(identity=str(user_id))
+
+        return jsonify({
+            "success": True, 
+            "message": "User registered",
+            "access_token": access_token,
+            "user": {"full_name": full_name, "email": email}
+        }), 201
 
     except Exception as e:
-        print(f"Registration error: {e}")
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "message": "Server error",
-                }
-            ),
-            500,
-        )
+        print(f"Register Error: {e}")
+        return jsonify({"success": False, "message": "Server error"}), 500
 
-
-@auth_bp.route("/login", methods=["POST"])
+# --- مسار تسجيل الدخول (Login) ---
+@auth_bp.route('/login', methods=['POST', 'OPTIONS'])
 def login():
-    """Login user"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"success": False, "message": "Database error"}), 500
+
     try:
-        data = request.get_json()
-
-        email = data.get("email", "").strip().lower()
-        password = data.get("password", "")
-
-        if not email or not password:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "Email and password are required",
-                    }
-                ),
-                400,
-            )
-
-        # Get user by email
-        user = db.get_user_by_email(email)
-
-        if not user:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "Invalid email or password",
-                    }
-                ),
-                401,
-            )
-
-        # Verify password
-        if not bcrypt.checkpw(
-            password.encode("utf-8"),
-            user["password_hash"].encode("utf-8"),
-        ):
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "Invalid email or password",
-                    }
-                ),
-                401,
-            )
-
-        # Create access token (identity must be string)
-        access_token = create_access_token(identity=str(user["id"]))
-
-        return (
-            jsonify(
-                {
-                    "success": True,
-                    "message": "Login successful",
-                    "user": {
-                        "id": user["id"],
-                        "full_name": user["full_name"],
-                        "email": user["email"],
-                    },
-                    "access_token": access_token,
-                }
-            ),
-            200,
-        )
-
-    except Exception as e:
-        print(f"Login error: {e}")
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "message": "Server error",
-                }
-            ),
-            500,
-        )
-
-
-@auth_bp.route("/me", methods=["GET"])
-@jwt_required()
-def get_current_user():
-    """Get current logged in user info"""
-    try:
-        identity = get_jwt_identity()
-        user_id = int(identity) if identity is not None else None
-
-        if user_id is None:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "Invalid token",
-                    }
-                ),
-                401,
-            )
-
-        user = db.get_user_by_id(user_id)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, full_name, password FROM users WHERE email = ?", (email,))
+        user = cursor.fetchone()
+        conn.close()
 
         if user:
-            return (
-                jsonify(
-                    {
-                        "success": True,
-                        "user": user,
-                    }
-                ),
-                200,
-            )
-        else:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "User not found",
-                    }
-                ),
-                404,
-            )
+            # التحقق من الباسورد
+            stored_pw = user['password'] # لأننا استخدمنا sqlite3.Row
+            if bcrypt.checkpw(password.encode('utf-8'), stored_pw):
+                access_token = create_access_token(identity=str(user['id']))
+                return jsonify({
+                    "success": True,
+                    "access_token": access_token,
+                    "user": {"full_name": user['full_name'], "email": email}
+                }), 200
+
+        return jsonify({"success": False, "message": "Invalid email or password"}), 401
 
     except Exception as e:
-        print(f"Get user error: {e}")
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "message": "Server error",
-                }
-            ),
-            500,
-        )
-
-
-@auth_bp.route("/logout", methods=["POST"])
-@jwt_required()
-def logout():
-    """Logout user (client-side token removal)"""
-    return (
-        jsonify(
-            {
-                "success": True,
-                "message": "Logged out successfully",
-            }
-        ),
-        200,
-    )
+        print(f"Login Error: {e}")
+        return jsonify({"success": False, "message": "Server error"}), 500

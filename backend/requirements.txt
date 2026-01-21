@@ -1,0 +1,8 @@
+Flask
+Flask-Cors
+Flask-JWT-Extended
+gunicorn
+numpy
+pillow
+python-dotenv
+google-generativeai
