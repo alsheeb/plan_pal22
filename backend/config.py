@@ -1,35 +1,44 @@
 import os
 from dotenv import load_dotenv
 
-
+# تحميل المتغيرات من ملف .env (للاستخدام المحلي)
 load_dotenv()
 
 class Config:
-    """Application configuration settings"""
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///plant_pal.db'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key')
-    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
-    # Flask Settings
+    # ----------------------------------
+    # 1. إعدادات الأمان والتطبيق
+    # ----------------------------------
     SECRET_KEY = os.getenv('SECRET_KEY', 'your-super-secret-key-change-in-production')
-    DEBUG = True
+    DEBUG = os.getenv('FLASK_DEBUG', 'False') == 'True'
     
-    # JWT Settings
+    # ----------------------------------
+    # 2. إعدادات JWT (التوثيق)
+    # ----------------------------------
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
-    JWT_ACCESS_TOKEN_EXPIRES = 86400  # 24 hours in seconds
+    JWT_ACCESS_TOKEN_EXPIRES = 86400  # 24 ساعة
+
+    # ----------------------------------
+    # 3. إعدادات قاعدة البيانات (Clever Cloud)
+    # ----------------------------------
+    # نستخدم os.getenv لقراءة المتغيرات التي وضعناها في Render
+    MYSQL_HOST = os.getenv('DB_HOST')
+    MYSQL_USER = os.getenv('DB_USER')
+    MYSQL_PASSWORD = os.getenv('DB_PASSWORD')
+    MYSQL_DB = os.getenv('DB_NAME')
+    MYSQL_PORT = int(os.getenv('DB_PORT', 3306))
+
+    # ----------------------------------
+    # 4. مسارات الملفات والموديل
+    # ----------------------------------
+    # تحديد المسار الحالي بدقة لضمان العمل على السيرفر
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     
-    # MySQL Database Settings
-    MYSQL_HOST = os.environ.get('DB_HOST', 'localhost')
-    MYSQL_USER = os.environ.get('DB_USER', 'root')
-    MYSQL_PASSWORD = os.environ.get('DB_PASSWORD', '')
-    MYSQL_DB = os.environ.get('DB_NAME', 'plant_pal_db')
-    MYSQL_PORT = int(os.environ.get('DB_PORT', 3306))
-    
-    # Model Settings
-    MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models')
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+    MODEL_PATH = os.path.join(BASE_DIR, 'models')
+
+    # ----------------------------------
+    # 5. إعدادات الصور والرفع
+    # ----------------------------------
     ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp'}
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
-    
-    # Image Settings
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB الحد الأقصى
     IMG_SIZE = (224, 224)
