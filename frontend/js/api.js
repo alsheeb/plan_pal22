@@ -52,13 +52,13 @@ window.API = {
 
     // هذه الدوال تعتمد الآن على دالة post اللي عرفناها فوق
     // لضمان التوافق سواء استخدمت API.login أو API.post في ملفاتك الأخرى
-    async register(username, password) {
+    async register(email, password) {
         // لاحظ المسار: نرسل فقط /auth/register لأن BASE_URL مدمج في دالة post
-        return this.post('/auth/register', { username, password });
+        return this.post('/auth/register', { email, password });
     },
 
-    async login(username, password) {
-        return this.post('/auth/login', { username, password });
+    async login(email, password) {
+        return this.post('/auth/login', { email, password });
     },
 
     // ---------------------------------------------
