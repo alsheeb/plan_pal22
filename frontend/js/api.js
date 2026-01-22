@@ -1,73 +1,61 @@
-// تأكد من مسح أي تعريف قديم لـ API أو API_URL في هذا الملف
-const API_BASE_URL = "https://plant-pal-api-qgb0.onrender.com/api";
+// js/api.js
 
-const API = {
+// تعريف الرابط الأساسي
+const BASE_URL = "https://plant-pal-api-qgb0.onrender.com/api";
+
+console.log("🔌 Loading API Module...");
+
+// تعريف الكائن API مباشرة على window
+window.API = {
     // 1. فحص الاتصال
-    async checkHealth() {
+    async healthCheck() {
         try {
-            const response = await fetch(`${API_BASE_URL}/health`);
-            if (!response.ok) throw new Error('Health check failed');
+            const response = await fetch(`${BASE_URL}/health`);
             return await response.json();
         } catch (error) {
-            console.error("Health Check Error:", error);
-            throw error;
+            console.error("Health Check Failed:", error);
+            // إرجاع كائن وهمي عشان ما يوقف الموقع
+            return { status: 'offline', message: error.message };
         }
     },
 
-    // 2. تسجيل مستخدم جديد
+    // 2. تسجيل جديد
     async register(username, password) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Registration failed');
-            return data;
-        } catch (error) {
-            console.error("Register Error:", error);
-            throw error;
-        }
+        const response = await fetch(`${BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Registration failed');
+        return data;
     },
 
-    // 3. تسجيل الدخول
+    // 3. تسجيل دخول
     async login(username, password) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Login failed');
-            return data;
-        } catch (error) {
-            console.error("Login Error:", error);
-            throw error;
-        }
+        const response = await fetch(`${BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Login failed');
+        return data;
     },
 
-    // 4. تحليل صورة النبات
+    // 4. تحليل صورة
     async predict(imageFile) {
-        try {
-            const formData = new FormData();
-            formData.append('image', imageFile);
+        const formData = new FormData();
+        formData.append('image', imageFile);
 
-            const response = await fetch(`${API_BASE_URL}/predict`, {
-                method: 'POST',
-                body: formData
-                // لا تضع Content-Type هنا، المتصفح سيضعه تلقائياً مع الـ Boundary
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Prediction failed');
-            return data;
-        } catch (error) {
-            console.error("Prediction Error:", error);
-            throw error;
-        }
+        const response = await fetch(`${BASE_URL}/predict`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Prediction failed');
+        return data;
     }
 };
 
-// تصدير الكائن للاستخدام في الملفات الأخرى
-window.API = API; 
+console.log("✅ API Module Loaded Successfully");
