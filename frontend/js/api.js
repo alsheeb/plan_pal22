@@ -1,49 +1,69 @@
 // js/api.js
 
-// تعريف الرابط الأساسي
 const BASE_URL = "https://plant-pal-api-qgb0.onrender.com/api";
 
 console.log("🔌 Loading API Module...");
 
-// تعريف الكائن API مباشرة على window
 window.API = {
-    // 1. فحص الاتصال
+    // ---------------------------------------------
+    // 1. دوال عامة (لحل مشكلة API.post is not a function)
+    // ---------------------------------------------
+    async post(endpoint, data) {
+        // التأكد من أن الرابط صحيح
+        const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${endpoint}`;
+        
+        console.log(`POST request to: ${url}`);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const responseData = await response.json();
+        if (!response.ok) {
+            throw new Error(responseData.error || 'Request failed');
+        }
+        return responseData;
+    },
+
+    async get(endpoint) {
+        const url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${endpoint}`;
+        const response = await fetch(url);
+        const responseData = await response.json();
+        if (!response.ok) {
+            throw new Error(responseData.error || 'Request failed');
+        }
+        return responseData;
+    },
+
+    // ---------------------------------------------
+    // 2. دوال محددة (Specific Methods)
+    // ---------------------------------------------
     async healthCheck() {
         try {
             const response = await fetch(`${BASE_URL}/health`);
             return await response.json();
         } catch (error) {
-            console.error("Health Check Failed:", error);
-            // إرجاع كائن وهمي عشان ما يوقف الموقع
-            return { status: 'offline', message: error.message };
+            console.warn("Health check failed, using offline mode.");
+            return { status: 'offline' };
         }
     },
 
-    // 2. تسجيل جديد
+    // هذه الدوال تعتمد الآن على دالة post اللي عرفناها فوق
+    // لضمان التوافق سواء استخدمت API.login أو API.post في ملفاتك الأخرى
     async register(username, password) {
-        const response = await fetch(`${BASE_URL}/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Registration failed');
-        return data;
+        // لاحظ المسار: نرسل فقط /auth/register لأن BASE_URL مدمج في دالة post
+        return this.post('/auth/register', { username, password });
     },
 
-    // 3. تسجيل دخول
     async login(username, password) {
-        const response = await fetch(`${BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Login failed');
-        return data;
+        return this.post('/auth/login', { username, password });
     },
 
-    // 4. تحليل صورة
+    // ---------------------------------------------
+    // 3. دالة التحليل (مختلفة لأنها ترسل ملف وليس JSON)
+    // ---------------------------------------------
     async predict(imageFile) {
         const formData = new FormData();
         formData.append('image', imageFile);
@@ -51,11 +71,13 @@ window.API = {
         const response = await fetch(`${BASE_URL}/predict`, {
             method: 'POST',
             body: formData
+            // لا نضع Content-Type هنا، المتصفح يضعه تلقائياً
         });
+
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Prediction failed');
         return data;
     }
 };
 
-console.log("✅ API Module Loaded Successfully");
+console.log("✅ API Module Loaded (with .post helper)");
