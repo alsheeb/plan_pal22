@@ -1,149 +1,73 @@
-/**
- * API Communication Module
- * Handles all HTTP requests to the backend
- */
+// تأكد من مسح أي تعريف قديم لـ API أو API_URL في هذا الملف
+const API_BASE_URL = "https://plant-pal-api-qgb0.onrender.com/api";
 
 const API = {
-    // Base URL for API endpoints
-    baseURL: `${window.location.origin}/api`,
+    // 1. فحص الاتصال
+    async checkHealth() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/health`);
+            if (!response.ok) throw new Error('Health check failed');
+            return await response.json();
+        } catch (error) {
+            console.error("Health Check Error:", error);
+            throw error;
+        }
+    },
 
-    
-    /**
-     * Get authorization headers
-     */
-    getHeaders(includeAuth = true) {
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-        
-        if (includeAuth) {
-            const token = localStorage.getItem('access_token');
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-        }
-        
-        return headers;
-    },
-    
-    /**
-     * Handle API response
-     */
-    async handleResponse(response) {
-        const data = await response.json();
-        
-        if (!response.ok) {
-            // Handle token expiration
-            if (response.status === 401) {
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('user');
-            }
-            throw new Error(data.message || 'An error occurred');
-        }
-        
-        return data;
-    },
-    
-    /**
-     * POST request
-     */
-    async post(endpoint, body, includeAuth = true) {
+    // 2. تسجيل مستخدم جديد
+    async register(username, password) {
         try {
-            const response = await fetch(`${this.baseURL}${endpoint}`, {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
-                headers: this.getHeaders(includeAuth),
-                body: JSON.stringify(body)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
             });
-            
-            return await this.handleResponse(response);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Registration failed');
+            return data;
         } catch (error) {
-            console.error('API POST Error:', error);
+            console.error("Register Error:", error);
             throw error;
         }
     },
-    
-    /**
-     * GET request
-     */
-    async get(endpoint, includeAuth = true) {
+
+    // 3. تسجيل الدخول
+    async login(username, password) {
         try {
-            const response = await fetch(`${this.baseURL}${endpoint}`, {
-                method: 'GET',
-                headers: this.getHeaders(includeAuth)
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
             });
-            
-            return await this.handleResponse(response);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Login failed');
+            return data;
         } catch (error) {
-            console.error('API GET Error:', error);
+            console.error("Login Error:", error);
             throw error;
         }
     },
-    
-    /**
-     * Upload image for prediction
-     */
+
+    // 4. تحليل صورة النبات
     async predict(imageFile) {
         try {
             const formData = new FormData();
             formData.append('image', imageFile);
-            
-            const headers = {};
-            const token = localStorage.getItem('access_token');
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            
-            const response = await fetch(`${this.baseURL}/predict`, {
+
+            const response = await fetch(`${API_BASE_URL}/predict`, {
                 method: 'POST',
-                headers: headers,
                 body: formData
+                // لا تضع Content-Type هنا، المتصفح سيضعه تلقائياً مع الـ Boundary
             });
-            
-            return await this.handleResponse(response);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Prediction failed');
+            return data;
         } catch (error) {
-            console.error('Prediction Error:', error);
+            console.error("Prediction Error:", error);
             throw error;
         }
-    },
-    
-    /**
-     * Get user prediction history
-     */
-    async getHistory(limit = 20) {
-        return await this.get(`/history?limit=${limit}`);
-    },
-    
-    /**
-     * Get disease info by ID
-     */
-    async getDiseaseById(id) {
-        return await this.get(`/disease/${id}`, false);
-    },
-    
-    /**
-     * Get all diseases
-     */
-    async getAllDiseases() {
-        return await this.get('/diseases', false);
-    },
-    
-    /**
-     * Search disease by name
-     */
-    async searchDisease(name) {
-        return await this.get(`/disease/search/${encodeURIComponent(name)}`, false);
-    },
-    
-    /**
-     * Health check
-     */
-    async healthCheck() {
-        try {
-            const response = await fetch(`${this.baseURL}/health`);
-            return await response.json();
-        } catch (error) {
-            return { status: 'error', message: error.message };
-        }
     }
-    
 };
+
+// تصدير الكائن للاستخدام في الملفات الأخرى
+window.API = API; 
