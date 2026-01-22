@@ -1,112 +1,131 @@
 import os
 import sys
-import types # <--- مكتبة مهمة للخدعة
+import types
 from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+import mysql.connector
 
 # ---------------------------------------------------
-# 1. إعداد المسارات (The Magic Fix)
+# 1. إصلاح مسارات الاستيراد (The Sys Path Hack)
 # ---------------------------------------------------
-# الحصول على المسار الحالي
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
-# إضافة المسار الحالي إلى sys.path
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
 
-# 🔥 الخدعة السحرية: إيهام البايثون بوجود مكتبة اسمها backend 🔥
-# هذا يحل مشكلة "No module named 'backend'" داخل ملفات routes
+# خدعة لإيهام بايثون بوجود موديول backend
 if 'backend' not in sys.modules:
-    # إنشاء موديول وهمي باسم backend
     backend_module = types.ModuleType('backend')
-    # توجيه مساره إلى المجلد الحالي
     backend_module.__path__ = [current_dir]
-    # تسجيله في النظام
     sys.modules['backend'] = backend_module
 
 # ---------------------------------------------------
-# 2. الاستيرادات (الآن ستعمل بنجاح بإذن الله)
+# 2. الاستيرادات
 # ---------------------------------------------------
-# استيراد Config
 try:
-    from config import Config
-except ImportError:
     from backend.config import Config
-
-# استيراد الـ Blueprints
-# الآن حتى لو كانت الملفات تستخدم "from backend.routes import..." ستعمل!
-try:
-    from routes.auth import auth_bp
-    from routes.predict import predict_bp
-    from routes.disease import disease_bp
-except ImportError as e:
-    print(f"⚠️ Warning: Import failed directly: {e}")
-    # محاولة بديلة
     from backend.routes.auth import auth_bp
     from backend.routes.predict import predict_bp
     from backend.routes.disease import disease_bp
+except ImportError:
+    # محاولة بديلة في حالة التشغيل المحلي
+    from config import Config
+    from routes.auth import auth_bp
+    from routes.predict import predict_bp
+    from routes.disease import disease_bp
 
 # ---------------------------------------------------
-# 3. دالة بناء التطبيق
+# 3. دالة تهيئة قاعدة البيانات (إنشاء الجداول)
+# ---------------------------------------------------
+def init_db():
+    """تقوم بإنشاء الجداول الضرورية في MySQL إذا لم تكن موجودة"""
+    try:
+        conn = mysql.connector.connect(
+            host=Config.MYSQL_HOST,
+            user=Config.MYSQL_USER,
+            password=Config.MYSQL_PASSWORD,
+            database=Config.MYSQL_DB,
+            port=Config.MYSQL_PORT
+        )
+        cursor = conn.cursor()
+        
+        # 1. إنشاء جدول المستخدمين
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 2. إنشاء جدول التنبؤات (History)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                image_path VARCHAR(500),
+                disease_name VARCHAR(255),
+                confidence FLOAT,
+                date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        """)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        print("✅ Database tables initialized successfully (MySQL).")
+    except Exception as e:
+        print(f"⚠️ Warning: Could not initialize DB tables: {e}")
+
+# ---------------------------------------------------
+# 4. إعداد التطبيق
 # ---------------------------------------------------
 def create_app():
-    # محاولة تحديد مكان مجلد الفرونت إند بذكاء
-    # نبحث عنه في المجلد الأب
+    # محاولة تحديد مكان مجلد الواجهة الأمامية (Frontend)
     parent_dir = os.path.dirname(current_dir)
     frontend_dist = os.path.join(parent_dir, 'frontend')
     
     app = Flask(__name__, static_folder=frontend_dist, static_url_path='')
-    
     app.config.from_object(Config)
 
-    # إعدادات JWT
-    app.config["JWT_TOKEN_LOCATION"] = ["headers"]
-    app.config["JWT_HEADER_NAME"] = "Authorization"
-    app.config["JWT_HEADER_TYPE"] = "Bearer"
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = False
-
+    # تهيئة JWT
     jwt = JWTManager(app)
 
-    CORS(app, resources={
-        r"/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"]
-        }
-    })
+    # تهيئة CORS
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
-    # تسجيل المسارات
+    # تهيئة الجداول عند بدء التشغيل
+    init_db()
+
+    # تسجيل المسارات (Blueprints)
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(predict_bp, url_prefix="/api")
     app.register_blueprint(disease_bp, url_prefix="/api")
 
+    # مسار الصور (الجديد)
+    @app.route("/backend/uploads/<filename>")
+    def uploaded_file_new(filename):
+        return send_from_directory(Config.UPLOAD_FOLDER, filename)
+
+    # مسار الصور (القديم - للدعم)
     @app.route("/uploads/<filename>")
-    def uploaded_file(filename):
+    def uploaded_file_old(filename):
         return send_from_directory(Config.UPLOAD_FOLDER, filename)
 
     @app.route("/api/health")
     def health_check():
-        return jsonify({
-            "status": "healthy", 
-            "message": "API is running perfectly",
-            "modules": {
-                "auth": "loaded",
-                "predict": "loaded",
-                "disease": "loaded"
-            }
-        }), 200
+        return jsonify({"status": "healthy", "db": "MySQL Cloud"}), 200
 
     @app.route("/")
     def index():
-        return jsonify({"message": "Plant Pal API Backend is Live!"})
+        return jsonify({"message": "Plant Pal API is Running on Clever Cloud DB!"})
 
     return app
 
-# تشغيل التطبيق
 app = create_app()
 
 if __name__ == "__main__":
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
-    os.makedirs(Config.MODEL_PATH, exist_ok=True)
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
