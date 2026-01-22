@@ -53,22 +53,14 @@ const Toast = {
         }, 300);
     },
 
-    success(message) {
-        this.show(message, 'success');
-    },
-
-    error(message) {
-        this.show(message, 'error');
-    },
-
-    warning(message) {
-        this.show(message, 'warning');
-    },
-
-    info(message) {
-        this.show(message, 'info');
-    }
+    success(message) { this.show(message, 'success'); },
+    error(message) { this.show(message, 'error'); },
+    warning(message) { this.show(message, 'warning'); },
+    info(message) { this.show(message, 'info'); }
 };
+
+// Make Toast globally available
+window.Toast = Toast;
 
 // Mobile Menu Handler
 const MobileMenu = {
@@ -113,71 +105,70 @@ const SmoothScroll = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🌿 PlantCare AI Initializing...');
 
-    const path = window.location.pathname.toLowerCase();
-
-    // Helper: on this page and Auth object موجود
-    const hasAuth = typeof Auth !== 'undefined';
-
-    if (hasAuth && !Auth.isLoggedIn()) {
-        if (path.endsWith('index.html') || path === '/' || path === '/index') {
-            window.location.href = 'login.html';
-            return;
-        }
-        if (path.endsWith('history.html')) {
-            window.location.href = 'login.html';
-            return;
-        }
-    }
-
-    // 2) لو المستخدم مسجّل الدخول:
-    //    - لا داعي لبقائه في login/register → حوّله إلى index.html
-    if (hasAuth && Auth.isLoggedIn()) {
-        if (path.endsWith('login.html') || path.endsWith('register.html')) {
-            window.location.href = 'index.html';
-            return;
-        }
-    }
-
-    // Initialize Toast system
+    // Initialize UI Components
     Toast.init();
-
-    // Initialize Mobile Menu
     MobileMenu.init();
-
-    // Initialize Smooth Scroll
     SmoothScroll.init();
 
+    const path = window.location.pathname.toLowerCase();
+    const hasAuth = typeof Auth !== 'undefined';
+
+    // 1. Auth Redirection Logic
     if (hasAuth) {
         Auth.updateNav();
+
+        if (!Auth.isLoggedIn()) {
+            // Protected routes: Redirect to login if not authenticated
+            if (path.endsWith('index.html') || path === '/' || path.endsWith('history.html') || path.endsWith('community.html')) {
+                // Check if already on login page to avoid loop
+                if (!path.endsWith('login.html') && !path.endsWith('register.html')) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+            }
+        } else {
+            // If logged in, redirect away from auth pages
+            if (path.endsWith('login.html') || path.endsWith('register.html')) {
+                window.location.href = 'index.html';
+                return;
+            }
+        }
     }
 
+    // 2. Upload Module Initialization
     if (typeof Upload !== 'undefined') {
         Upload.init();
     }
 
-    // New Analysis button
+    // 3. New Analysis Button Logic
     const newAnalysisBtn = document.getElementById('newAnalysisBtn');
     if (newAnalysisBtn && typeof Upload !== 'undefined') {
         newAnalysisBtn.addEventListener('click', () => {
             Upload.reset();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    }
-
-    // API health check
-    if (typeof API !== 'undefined') {
-        API.healthCheck().then(response => {
-            if (response.status === 'healthy') {
-                console.log('✅ API Connected');
-            } else {
-                console.warn('⚠️ API Connection Issue:', response.message);
+            const uploadSection = document.getElementById('upload');
+            if(uploadSection) {
+                uploadSection.scrollIntoView({ behavior: 'smooth' });
             }
         });
     }
 
+    // 4. Safe API Health Check
+    // ننتظر قليلاً للتأكد من تحميل api.js
+    setTimeout(() => {
+        if (typeof API !== 'undefined' && typeof API.healthCheck === 'function') {
+            API.healthCheck()
+                .then(response => {
+                    if (response.status === 'healthy') {
+                        console.log('✅ API Connected Successfully');
+                    } else {
+                        console.warn('⚠️ API Connected but status is:', response.status);
+                    }
+                })
+                .catch(err => console.warn('⚠️ API Connection Warning:', err));
+        } else {
+            console.error('❌ API module not loaded correctly. Check script order in HTML.');
+        }
+    }, 100);
+
     console.log('✅ PlantCare AI Ready!');
-    
 });
-
-
-window.Toast = Toast;
