@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Plant_Pal</title>
 
-    <!-- SEO & Meta -->
     <meta name="description" content="Sign in to Plant_Pal to access your plant care history and reminders.">
 
-    <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -16,7 +14,7 @@
     <!-- Navigation -->
     <nav class="navbar" aria-label="Main navigation">
         <div class="nav-container">
-            <a class="logo">
+            <a href="index.html" class="logo">
                 <span class="logo-icon" aria-hidden="true">🌿</span>
                 <span class="logo-text">Plant_Pal</span>
             </a>
@@ -87,15 +85,15 @@
             
             <footer class="auth-footer">
                 <p>Don't have an account? <a href="register.html">Create one</a></p>
-                
             </footer>
         </div>
     </main>
 
-    <!-- Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/main.js"></script>
+    <!-- Scripts مع إضافة ?v=3 لإجبار المتصفح على تحميل النسخة الجديدة -->
+    <script src="js/api.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+    
     <script>
         const loginForm = document.getElementById('loginForm');
         const emailInput = document.getElementById('email');
@@ -124,6 +122,7 @@
                 const result = await Auth.login(email, password);
                 
                 if (result.success) {
+                    // التوجيه للصفحة الرئيسية عند النجاح
                     window.location.href = 'index.html';
                 } else {
                     errorDiv.textContent = result.message || 'Login failed. Please check your credentials.';
