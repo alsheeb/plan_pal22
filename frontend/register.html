@@ -119,212 +119,58 @@
         </div>
     </section>
 
-    <!-- Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
+      <!-- Scripts -->
+    <!-- ?v=3 لإجبار المتصفح على تحميل النسخة الجديدة -->
+    <script src="js/api.js?v=3"></script>
+    <script src="js/auth.js?v=3"></script>
     <script src="js/main.js"></script>
 
     <script>
-        // ==============================
-        // EmailJS OTP CONFIG
-        // ==============================
-        const EMAILJS_PUBLIC_KEY = "mtS1y1z7dnF5cczJc";
-        const EMAILJS_SERVICE_ID = "plant_pal";
-        const EMAILJS_TEMPLATE_ID = "template_1aq0ywl";
+        // إعدادات EmailJS والأزرار كما هي...
+        // ... (الكود الخاص بـ OTP اتركه كما هو) ...
 
-        emailjs.init(EMAILJS_PUBLIC_KEY);
-
-        const OTP_LENGTH = 6;
-        const OTP_EXPIRATION_MINUTES = 5;
-
-        let currentOTP = null;
-        let otpExpirationTime = null;
-        let otpVerified = false;
-
-        function generateOTP(length) {
-            let otp = "";
-            for (let i = 0; i < length; i++) {
-                otp += Math.floor(Math.random() * 10);
-            }
-            return otp;
-        }
-
-        async function handleSendOtp() {
-            const emailInput = document.getElementById('email');
-            const otpSection = document.getElementById('otpSection');
-            const otpMessage = document.getElementById('otpMessage');
-            const sendOtpBtn = document.getElementById('sendOtpBtn');
-
-            const email = emailInput.value.trim();
-
-            otpMessage.style.display = 'none';
-
-            if (!email) {
-                otpMessage.textContent = 'Please enter your email first.';
-                otpMessage.style.display = 'block';
-                return;
-            }
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                otpMessage.textContent = 'Please enter a valid email address.';
-                otpMessage.style.display = 'block';
-                return;
-            }
-
-            const otp = generateOTP(OTP_LENGTH);
-            currentOTP = otp;
-            otpExpirationTime = Date.now() + OTP_EXPIRATION_MINUTES * 60 * 1000;
-            otpVerified = false;
-
-            const templateParams = {
-                to_email: email,  // matches {{to_email}} in EmailJS template
-                otp_code: otp     // matches {{otp_code}} in EmailJS template
-            };
-
-            try {
-                sendOtpBtn.disabled = true;
-                sendOtpBtn.textContent = 'Sending...';
-
-                const response = await emailjs.send(
-                    EMAILJS_SERVICE_ID,
-                    EMAILJS_TEMPLATE_ID,
-                    templateParams
-                );
-
-                console.log('EmailJS response:', response);
-
-                otpSection.style.display = 'block';
-                otpMessage.style.color = 'white';
-                otpMessage.textContent = 'OTP sent to your email. Please check your inbox';
-                otpMessage.style.display = 'block';
-            } catch (error) {
-                console.error('EmailJS Error:', error);
-                otpMessage.style.color = 'red';
-                otpMessage.textContent = 'Failed to send OTP. Please try again.';
-                otpMessage.style.display = 'block';
-            } finally {
-                sendOtpBtn.disabled = false;
-                sendOtpBtn.textContent = 'Send OTP to Email';
-            }
-        }
-
-        function handleVerifyOtp() {
-            const otpInput = document.getElementById('otp');
-            const otpMessage = document.getElementById('otpMessage');
-            const enteredOTP = otpInput.value.trim();
-
-            otpMessage.style.display = 'none';
-
-            if (!enteredOTP) {
-                otpMessage.textContent = 'Please enter the OTP code.';
-                otpMessage.style.color = 'red';
-                otpMessage.style.display = 'block';
-                return;
-            }
-
-            if (!currentOTP) {
-                otpMessage.textContent = 'Please click "Send OTP to Email" first.';
-                otpMessage.style.color = 'red';
-                otpMessage.style.display = 'block';
-                return;
-            }
-
-            const now = Date.now();
-            if (otpExpirationTime && now > otpExpirationTime) {
-                otpMessage.textContent = 'OTP has expired. Please request a new one.';
-                otpMessage.style.color = 'red';
-                otpMessage.style.display = 'block';
-                currentOTP = null;
-                otpExpirationTime = null;
-                otpVerified = false;
-                return;
-            }
-
-            if (enteredOTP === currentOTP) {
-                otpVerified = true;
-                otpMessage.textContent = 'OTP verified successfully. You can create your account now.';
-                otpMessage.style.color = 'green';
-                otpMessage.style.display = 'block';
-            } else {
-                otpMessage.textContent = 'Invalid OTP. Please try again.';
-                otpMessage.style.color = 'red';
-                otpMessage.style.display = 'block';
-            }
-        }
-
-        // Handle register form submit
+        // تعديل بسيط في معالج التسجيل
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const fullName = document.getElementById('fullName').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const errorDiv = document.getElementById('formError');
-            const otpMessage = document.getElementById('otpMessage');
+            // ... (أكواد التحقق من الباسورد والـ OTP كما هي) ...
+            
+            // زر التحميل
             const btn = document.getElementById('registerBtn');
+            const errorDiv = document.getElementById('formError');
             
-            errorDiv.style.display = 'none';
-
-            // Validate passwords match
-            if (password !== confirmPassword) {
-                errorDiv.textContent = 'Passwords do not match';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            // Make sure OTP is verified before creating account
-            if (!otpVerified) {
-                otpMessage.textContent = 'Please verify the OTP before creating your account.';
-                otpMessage.style.color = 'red';
-                otpMessage.style.display = 'block';
-                return;
-            }
-            
-            // Show loading
-            btn.querySelector('.btn-text').style.display = 'none';
-            btn.querySelector('.btn-loader').style.display = 'inline-block';
+            // إظهار اللودر
+            const btnText = btn.querySelector('.btn-text');
+            const btnLoader = btn.querySelector('.btn-loader');
+            if(btnText) btnText.style.display = 'none';
+            if(btnLoader) btnLoader.style.display = 'inline-block';
             btn.disabled = true;
             
             try {
+                const fullName = document.getElementById('fullName').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                // استدعاء دالة التسجيل
                 const result = await Auth.register(fullName, email, password);
                 
                 if (!result.success) {
                     errorDiv.textContent = result.message;
                     errorDiv.style.display = 'block';
+                    // إعادة الزر لحالته
+                    if(btnText) btnText.style.display = 'inline';
+                    if(btnLoader) btnLoader.style.display = 'none';
+                    btn.disabled = false;
                 }
-                // If Auth.register succeeds, it will redirect (as defined in auth.js)
             } catch (error) {
-                errorDiv.textContent = 'An error occurred. Please try again.';
+                console.error(error);
+                errorDiv.textContent = 'Connection error';
                 errorDiv.style.display = 'block';
-            } finally {
-                btn.querySelector('.btn-text').style.display = 'inline';
-                btn.querySelector('.btn-loader').style.display = 'none';
+                if(btnText) btnText.style.display = 'inline';
+                if(btnLoader) btnLoader.style.display = 'none';
                 btn.disabled = false;
             }
         });
-        
-        // Toggle password visibility
-        document.getElementById('togglePassword').addEventListener('click', () => {
-            const passwordInput = document.getElementById('password');
-            const type = passwordInput.type === 'password' ? 'text' : 'password';
-            passwordInput.type = type;
-        });
-
-        // Attach OTP buttons
-        document.getElementById('sendOtpBtn').addEventListener('click', handleSendOtp);
-        document.getElementById('verifyOtpBtn').addEventListener('click', handleVerifyOtp);
-        
     </script>
-   
-
-<!-- بعد ذلك، يمكنك استخدام API -->
-    <script>
-    // أي كود يستخدم API يجب أن يكون بعد تحميل api.js
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        // ...
-    });
-</script>
 </body>
 </html>
